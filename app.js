@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
+const connectDB = require('./database');
 
 const app = express();
 
@@ -57,6 +59,8 @@ app.use('/graphql', graphqlHTTP({
     },
     graphiql: true
 }));
+
+connectDB();
 
 const PORT = 5000;
 app.listen(PORT, () => {
