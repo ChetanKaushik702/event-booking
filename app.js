@@ -5,6 +5,7 @@ const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const connectDB = require('./database');
 const Event = require('./models/event');
+const User = require('./models/user');
 
 const app = express();
 
@@ -20,11 +21,22 @@ app.use('/graphql', graphqlHTTP({
             date: String! 
         }
 
+        type User {
+            _id: ID!
+            email: String!
+            password: String
+        }
+
         input EventInput {
             title: String!
             description: String!
             price: Float!
             date: String!
+        }
+
+        input UserInput {
+            email: String!
+            password: String!
         }
 
         type RootQuery {
@@ -33,6 +45,7 @@ app.use('/graphql', graphqlHTTP({
 
         type RootMutation {
             createEvent(eventInput: EventInput): Event
+            createUser(userInput: UserInput): User
         }
 
         schema {
@@ -44,7 +57,7 @@ app.use('/graphql', graphqlHTTP({
         events: () => {
             return Event.find().then(events => {
                 return events.map(event => {
-                    return { ...event._doc, _id: event._doc._id.toString() }
+                    return { ...event._doc }
                 });
             }).catch(err => {
                 console.log(err);
@@ -59,11 +72,18 @@ app.use('/graphql', graphqlHTTP({
                date: new Date(args.eventInput.date)
            });
            return event.save().then(result => {
-               return { ...result._doc };
+               return { ...result._doc, _id: result._doc._id.toString()  };
            }).catch(err => {
                console.log(err);
                throw err;
            });
+        },
+        createUser: (args) => {
+            const user = new User({
+                email: args.userInput.email,
+                password: args.userInput.password
+            });
+            return user.save().then(result => ({ ...result._doc, password: null, _id: result.id.toString() })).catch(err => {console.log(err); throw err;});
         }
     },
     graphiql: true
